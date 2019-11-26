@@ -1,0 +1,111 @@
+{#
+    Template for Home Page
+
+    Author: Sai Hemanth Bheemreddy
+#}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+        {# MDC, Material Icons, Work Sans font, custom stylesheets #}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/material-components-web.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/material-icons.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/work-sans.css') }}">
+       <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+        <title>Text Classifier</title>
+    </head>
+    <body>
+        <div class="body">
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <div class="mdc-card">
+                <form action="/classification" method="post">
+                    <div class="mdc-card-title"><h2>Text Classifier</h2></div>
+                    <div class="mdc-card-content">
+                        {# Review Field #}
+                        <div class="mdc-text-field mdc-text-field--outlined myTextField">
+                            <input class="mdc-text-field__input" name="review" type="text" maxlength="256" required>
+                            <label for="review" class="mdc-floating-label">Text</label>
+                            <div class="mdc-notched-outline">
+                                <svg>
+                                    <path class="mdc-notched-outline__path"/>
+                                </svg>
+                            </div>
+                            <div class="mdc-notched-outline__idle"></div>
+                        </div>
+                    </div>
+                    <div class="mdc-card__actions">
+                        <div class="mdc-card__action-icons">
+                            <button class="mdc-button mdc-button--raised mdc-theme--secondary-bg mdc-theme--on-secondary mdc-card__action mdc-card__action--icon" title="Evaulate">Evaulate</button>
+                        </div>
+                    </div>
+
+                    {# Result is Inserted Here #}
+                    <div class="mdc-card-content-1">
+                        {% if result %}
+                        <p> <strong> {{ result[0] }}</strong></p>
+                        <p>{{ result[1] }}</p>
+                        <p>{{ result[2] }}</p>
+                        {% else %}
+                        <p>Type a text to get Result</p>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <br />
+            <br />
+            <div class="mdc-card">
+                <form action="/ner" method="post">
+                    <div class="mdc-card-title"><h2>Named Entity Recognition</h2></div>
+                    <div class="mdc-card-content">
+                        {# Review Field #}
+                        <div class="mdc-text-field mdc-text-field--outlined myTextField">
+                            <input class="mdc-text-field__input" name="review" type="text" maxlength="256" required>
+                            <label for="review" class="mdc-floating-label">Text</label>
+                            <div class="mdc-notched-outline">
+                                <svg>
+                                    <path class="mdc-notched-outline__path"/>
+                                </svg>
+                            </div>
+                            <div class="mdc-notched-outline__idle"></div>
+                        </div>
+                    </div>
+                    <div class="mdc-card__actions">
+                        <div class="mdc-card__action-icons">
+                            <button class="mdc-button mdc-button--raised mdc-theme--secondary-bg mdc-theme--on-secondary mdc-card__action mdc-card__action--icon" title="Evaulate">Evaulate</button>
+                        </div>
+                    </div>
+
+                    {# Result is Inserted Here #}
+                    <div class="mdc-card-content-1">
+                        {% if result %}
+                        <p> <strong> {{ result[3] }}</strong></p>
+                        <p>{{ result[4] }}</p>
+                        {% else %}
+                        <p>Type a text to get Result</p>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            <br />
+            <br />
+            <br />
+            <br />
+        </div>
+
+        {# MDC and MDC elemnts initialization javascripts #}
+        <script type="text/javascript" src="{{ url_for('static', filename='js/material-components-web.js') }}"> </script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/mdcinit.js') }}"></script>
+    </body>
+</html>

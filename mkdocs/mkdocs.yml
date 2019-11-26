@@ -1,0 +1,28 @@
+site_name: BAND
+site_author: SunYanCN
+
+nav:
+    - Home: index.md
+    - Contribution: CONTRIBUTING.md
+    - License: LICENSE.md
+    - Documentation:
+
+
+
+theme:
+  name: 'material'
+  palette:
+    primary: 'black'
+    accent: 'indigo'
+  logo: 'img/logo.png'
+  favicon: 'img/favicon.ico'
+
+repo_name: 'SunYanCN/BAND'
+repo_url: 'https://github.com/SunYanCN/BAND'
+
+google_analytics:
+  - 'UA-137434942-5'
+  - 'auto'
+
+markdown_extensions:
+  - codehilite
