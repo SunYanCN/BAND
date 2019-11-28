@@ -1,3 +1,4 @@
+six
 tensorflow==2.0.0
 numpy==1.16.4
 pandas==0.23.4
@@ -8,3 +9,4 @@ tqdm
 transformers
 nltk
 jieba
+tabulator==1.30.0

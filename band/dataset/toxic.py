@@ -24,10 +24,12 @@ class Toxic_Processor(CSV_Processor):
 
     def _create_examples(self, lines, set_type):
         examples = []
-        for index, row in lines.iterrows():
-            guid = "%s-%s" % (set_type, row["id"])
-            label = [int(value) for value in row[2:]]
-            text_a = row["comment_text"]
+        for i, line in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, line[0])
+            label = [int(value) for value in line[2:]]
+            text_a = line[1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
@@ -52,10 +54,13 @@ class Toxic(Dataset_Base):
     def dataset_information(self):
         text_information(data=self.data,
                          single_text=True, language='en', char_level=False, tokenizer='nltk')
-        label_information(data=self.data)
+        # label_information(data=self.data)
 
 
 if __name__ == '__main__':
     dataset = Toxic(save_path='/tmp/band')
     data1, label1 = dataset.data, dataset.label
     dataset.dataset_information()
+
+
+

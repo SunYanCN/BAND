@@ -11,8 +11,7 @@
 import os
 import prettytable as pt
 import tensorflow as tf
-import pandas as pd
-
+from tabulator import Stream
 from band.utils import text_length_info
 from transformers.data.processors import DataProcessor
 
@@ -47,7 +46,8 @@ def load_dataset(dataset_dir: str, processor):
     return data, label
 
 
-def text_information(data, single_text: object = True, language: str = 'zh', char_level: bool = True, tokenizer=None) -> object:
+def text_information(data, single_text: object = True, language: str = 'zh', char_level: bool = True,
+                     tokenizer=None) -> object:
     TableA = pt.PrettyTable()
     TableA.field_names = ["Information", "Data Number", "Text MaxLen", "Text Min_len", "Text Mean_len",
                           "Recommended Len"]
@@ -126,6 +126,12 @@ class TSV_Processor(DataProcessor):
     def _create_examples(self, lines, set_type):
         raise NotImplementedError
 
+    @classmethod
+    def _read_tsv(cls, input_file, **kwargs):
+        with Stream(input_file) as stream:
+            for row in stream:
+                yield row
+
 
 class CSV_Processor(DataProcessor):
 
@@ -152,6 +158,8 @@ class CSV_Processor(DataProcessor):
 
     @classmethod
     def _read_csv(cls, input_file):
-        """Reads a tab separated value file."""
-        csv_data = pd.read_csv(input_file)
-        return csv_data
+        with Stream(input_file) as stream:
+            for row in stream:
+                yield row
+
+
