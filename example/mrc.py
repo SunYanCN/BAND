@@ -26,7 +26,7 @@ dataset.dataset_information()
 
 train_number, eval_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
 
-config = BertConfig.from_pretrained("bert-base-cased", num_labels=dataset.num_labels)
+config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 model = TFBertForQuestionAnswering.from_pretrained('bert-base-chinese', config=config)
 

@@ -5,7 +5,7 @@
 @version: 1.0
 @license: MIT Licence
 @file: classification.py
-@time: 2019-11-22 16:49:32
+@time: 2019-11-29 16:49:32
 """
 import time
 import tensorflow as tf
@@ -13,6 +13,8 @@ from transformers import *
 
 from band.dataset import ChnSentiCorp
 from band.progress import classification_convert_examples_to_features
+
+import os, json
 
 USE_XLA = False
 USE_AMP = False
@@ -23,13 +25,22 @@ EVAL_BATCH_SIZE = 16
 TEST_BATCH_SIZE = 1
 MAX_SEQ_LEN = 128
 
-
 tf.config.optimizer.set_jit(USE_XLA)
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": USE_AMP})
 
 dataset = ChnSentiCorp(save_path="/tmp/band")
 data, label = dataset.data, dataset.label
 dataset.dataset_information()
+
+num_workers = 2
+os.environ['TF_CONFIG'] = json.dumps({
+    'cluster': {
+        'worker': ["localhost:20000", "localhost:20001"]
+    },
+    'task': {'type': 'worker', 'index': 0}
+})
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+BATCH_SIZE = BATCH_SIZE * num_workers
 
 train_number, eval_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
 
@@ -48,14 +59,15 @@ train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 valid_dataset = valid_dataset.batch(EVAL_BATCH_SIZE)
 valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
-model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config)
-optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08)
-if USE_AMP:
-    optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')
-loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
-model.compile(optimizer=optimizer, loss=loss, metrics=[metric])
+with strategy.scope():
+    config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
+    model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08)
+    if USE_AMP:
+        optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')
+    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
+    model.compile(optimizer=optimizer, loss=loss, metrics=[metric])
 
 history = model.fit(train_dataset, epochs=EPOCHS,
                     steps_per_epoch=train_number // BATCH_SIZE,
@@ -95,4 +107,5 @@ NO USE_XLA
 
 Epoch 1/5
 
+The auto mixed precision graph optimizer is only designed for GPUs of Volta generation (SM 7.0) or later, and if no such GPUs are detected (Titan X is pre-Volta) then it will print the message you see.
 """
