@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 def classification_convert_examples_to_features(examples, tokenizer,
-                                      max_length=512,
-                                      label_list=None,
-                                      output_mode=None,
-                                      pad_on_left=False,
-                                      pad_token=0,
-                                      pad_token_segment_id=0,
-                                      mask_padding_with_zero=True):
+                                                max_length=512,
+                                                label_list=None,
+                                                output_mode=None,
+                                                pad_on_left=False,
+                                                pad_token=0,
+                                                pad_token_segment_id=0,
+                                                mask_padding_with_zero=True):
     """
     Loads a data file into a list of ``InputFeatures``
 

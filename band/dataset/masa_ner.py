@@ -44,16 +44,37 @@ class MSRA_NER(Dataset_Base):
                                        dataset_url=DATASET_URL['msra_ner'],
                                        cache_dir=self.save_path)
 
-        data_processor = MSRA_NER_Processor()
-        self.data, self.label = load_dataset(processor=data_processor, dataset_dir=dataset_dir)
+        self.data_processor = MSRA_NER_Processor()
+        self.data, self.label = load_dataset(processor=self.data_processor, dataset_dir=dataset_dir)
 
     def dataset_information(self):
         text_information(data=self.data,
                          single_text=True, language='zh', char_level=True, tokenizer=None)
         label_information(data=self.data)
 
+    def get_labels(self):
+        return self.data_processor.get_labels()
+
+    @property
+    def num_labels(self):
+        return len(self.get_labels())
+
+    @property
+    def train_examples_num(self):
+        return len(self.data['train'])
+
+    @property
+    def test_examples_num(self):
+        return len(self.data['test'])
+
+    @property
+    def eval_examples_num(self):
+        return len(self.data['validation'])
+
 
 if __name__ == '__main__':
     dataset = MSRA_NER(save_path='/tmp/band')
     data1, label1 = dataset.data, dataset.label
     dataset.dataset_information()
+    print(dataset.get_labels())
+    print(dataset.num_labels, dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num)

@@ -13,3 +13,5 @@ DATASET_URL = {'msra_ner': "https://paddlehub-dataset.bj.bcebos.com/msra_ner.tar
                'lcqmc': 'https://paddlehub-dataset.bj.bcebos.com/lcqmc.tar.gz',
                'toxic': "https://bj.bcebos.com/paddlehub-dataset/toxic.tar.gz",
                }
+
+DEFAULT_DATASET_DOWNLOAD_PATH = "/tmp/band"

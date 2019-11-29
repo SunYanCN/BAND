@@ -40,6 +40,7 @@ class Toxic(Dataset_Base):
         The kaggle Toxic dataset:
         https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge
     """
+
     def __init__(self, save_path: str):
         super().__init__(save_path)
         dataset_dir = download_dataset(save_path=self.save_path,
@@ -48,19 +49,37 @@ class Toxic(Dataset_Base):
                                        dataset_url=DATASET_URL['toxic'],
                                        cache_dir=self.save_path)
 
-        data_processor = Toxic_Processor()
-        self.data, self.label = load_dataset(processor=data_processor, dataset_dir=dataset_dir)
+        self.data_processor = Toxic_Processor()
+        self.data, self.label = load_dataset(processor=self.data_processor, dataset_dir=dataset_dir)
 
     def dataset_information(self):
         text_information(data=self.data,
                          single_text=True, language='en', char_level=False, tokenizer='nltk')
         # label_information(data=self.data)
 
+    def get_labels(self):
+        return self.data_processor.get_labels()
+
+    @property
+    def num_labels(self):
+        return len(self.get_labels())
+
+    @property
+    def train_examples_num(self):
+        return len(self.data['train'])
+
+    @property
+    def test_examples_num(self):
+        return len(self.data['test'])
+
+    @property
+    def eval_examples_num(self):
+        return len(self.data['validation'])
+
 
 if __name__ == '__main__':
     dataset = Toxic(save_path='/tmp/band')
     data1, label1 = dataset.data, dataset.label
     dataset.dataset_information()
-
-
-
+    print(dataset.get_labels())
+    print(dataset.num_labels, dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num)

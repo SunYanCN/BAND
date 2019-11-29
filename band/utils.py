@@ -143,6 +143,6 @@ if __name__ == '__main__':
     en_text = ["ILove China."]
     print(text_length_info(zh_text, language='zh', char_level=True))
     print(text_length_info(zh_text, language='zh', char_level=False))
-    # print(text_length_info(en_text, language='en', char_level=True))
-    # print(text_length_info(en_text, language='en', char_level=False, tokenizer='spacy'))
-    # print(text_length_info(en_text, language='en', char_level=False, tokenizer='nltk'))
+    print(text_length_info(en_text, language='en', char_level=True))
+    print(text_length_info(en_text, language='en', char_level=False, tokenizer='spacy'))
+    print(text_length_info(en_text, language='en', char_level=False, tokenizer='nltk'))

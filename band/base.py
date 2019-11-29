@@ -14,6 +14,7 @@ import tensorflow as tf
 from tabulator import Stream
 from band.utils import text_length_info
 from transformers.data.processors import DataProcessor
+from band.config import DEFAULT_DATASET_DOWNLOAD_PATH
 
 
 def download_dataset(save_path: str, dataset_name: str, file_name: str, dataset_url: str, cache_dir: str):
@@ -96,10 +97,29 @@ def label_information(data):
 
 class Dataset_Base(object):
 
-    def __init__(self, save_path: str = '~/.band'):
+    def __init__(self, save_path: str = DEFAULT_DATASET_DOWNLOAD_PATH):
         self.save_path = save_path
 
     def dataset_information(self):
+        raise NotImplementedError
+
+    def get_labels(self):
+        raise NotImplementedError
+
+    @property
+    def num_labels(self):
+        raise NotImplementedError
+
+    @property
+    def train_examples_num(self):
+        raise NotImplementedError
+
+    @property
+    def test_examples_num(self):
+        raise NotImplementedError
+
+    @property
+    def eval_examples_num(self):
         raise NotImplementedError
 
 
@@ -161,5 +181,3 @@ class CSV_Processor(DataProcessor):
         with Stream(input_file) as stream:
             for row in stream:
                 yield row
-
-
