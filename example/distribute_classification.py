@@ -24,6 +24,7 @@ BATCH_SIZE = 16
 EVAL_BATCH_SIZE = 16
 TEST_BATCH_SIZE = 1
 MAX_SEQ_LEN = 128
+LEARNING_RATE = 3e-5
 
 tf.config.optimizer.set_jit(USE_XLA)
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": USE_AMP})
@@ -62,7 +63,7 @@ valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 with strategy.scope():
     config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
     model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08)
     if USE_AMP:
         optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -85,27 +86,4 @@ history = model.fit(train_dataset, epochs=EPOCHS,
 
 # saved_model_path = "./saved_models/{}".format(int(time.time()))
 # model.save(saved_model_path, save_format="tf")
-"""
-USE_XLA 
 
-Epoch 1/5
-600/600 [==============================] - 573s 955ms/step - loss: 0.2824 - accuracy: 0.8940 - val_loss: 0.2162 - val_accuracy: 0.9192
-Epoch 2/5
-600/600 [==============================] - 309s 515ms/step - loss: 0.1577 - accuracy: 0.9444 - val_loss: 0.2361 - val_accuracy: 0.9233
-Epoch 3/5
-600/600 [==============================] - 309s 514ms/step - loss: 0.0993 - accuracy: 0.9678 - val_loss: 0.2270 - val_accuracy: 0.9333
-Epoch 4/5
-600/600 [==============================] - 307s 512ms/step - loss: 0.0702 - accuracy: 0.9780 - val_loss: 0.2492 - val_accuracy: 0.9300
-Epoch 5/5
-600/600 [==============================] - 310s 516ms/step - loss: 0.0572 - accuracy: 0.9815 - val_loss: 0.2675 - val_accuracy: 0.9300
-
-The auto mixed precision graph optimizer is only designed for GPUs of Volta generation (SM 7.0) or later, and if no such GPUs are detected (Titan X is pre-Volta) then it will print the message you see.
-"""
-
-"""
-NO USE_XLA 
-
-Epoch 1/5
-
-The auto mixed precision graph optimizer is only designed for GPUs of Volta generation (SM 7.0) or later, and if no such GPUs are detected (Titan X is pre-Volta) then it will print the message you see.
-"""

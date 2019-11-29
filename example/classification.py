@@ -22,6 +22,7 @@ BATCH_SIZE = 16
 EVAL_BATCH_SIZE = 16
 TEST_BATCH_SIZE = 1
 MAX_SEQ_LEN = 128
+LEARNING_RATE = 3e-5
 
 
 tf.config.optimizer.set_jit(USE_XLA)
@@ -50,7 +51,7 @@ valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
 config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
 model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config)
-optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08)
+optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08)
 if USE_AMP:
     optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')
 loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -94,5 +95,10 @@ The auto mixed precision graph optimizer is only designed for GPUs of Volta gene
 NO USE_XLA 
 
 Epoch 1/5
+600/600 [==============================] - 355s 592ms/step - loss: 0.2685 - accuracy: 0.8976 - val_loss: 0.2427 - val_accuracy: 0.9142
+Epoch 2/5
+600/600 [==============================] - 332s 554ms/step - loss: 0.1707 - accuracy: 0.9420 - val_loss: 0.1824 - val_accuracy: 0.9258
+Epoch 3/5
+600/600 [==============================] - 332s 554ms/step - loss: 0.0934 - accuracy: 0.9686 - val_loss: 0.1995 - val_accuracy: 0.9383
 
 """

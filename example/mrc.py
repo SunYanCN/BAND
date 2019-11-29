@@ -18,6 +18,7 @@ BATCH_SIZE = 32
 EVAL_BATCH_SIZE = 32
 TEST_BATCH_SIZE = 1
 MAX_SEQ_LEN = 128
+LEARNING_RATE = 3e-5
 
 dataset = MSRA_NER(save_path="/tmp/band")
 data, label = dataset.data, dataset.label
@@ -35,13 +36,13 @@ train_dataset = ner_convert_examples_to_features(data['train'], tokenizer, max_l
 valid_dataset = ner_convert_examples_to_features(data['validation'], tokenizer, max_length=MAX_SEQ_LEN, label_list=label)
 
 
-train_dataset = train_dataset.shuffle(100).batch(BATCH_SIZE,drop_remainder=True).repeat(2)
+train_dataset = train_dataset.shuffle(100).batch(BATCH_SIZE,drop_remainder=True).repeat(EPOCHS)
 train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
 valid_dataset = valid_dataset.batch(EVAL_BATCH_SIZE)
 valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08, clipnorm=1.0)
+optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08, clipnorm=1.0)
 loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
 model.compile(optimizer=optimizer, loss=loss, metrics=[metric])
