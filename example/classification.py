@@ -100,5 +100,8 @@ Epoch 2/5
 600/600 [==============================] - 332s 554ms/step - loss: 0.1707 - accuracy: 0.9420 - val_loss: 0.1824 - val_accuracy: 0.9258
 Epoch 3/5
 600/600 [==============================] - 332s 554ms/step - loss: 0.0934 - accuracy: 0.9686 - val_loss: 0.1995 - val_accuracy: 0.9383
-
+Epoch 4/5
+600/600 [==============================] - 333s 554ms/step - loss: 0.0768 - accuracy: 0.9747 - val_loss: 0.2288 - val_accuracy: 0.9442
+Epoch 5/5
+600/600 [==============================] - 333s 555ms/step - loss: 0.0564 - accuracy: 0.9807 - val_loss: 0.2247 - val_accuracy: 0.9408
 """

@@ -36,7 +36,7 @@ dataset.dataset_information()
 num_workers = 2
 os.environ['TF_CONFIG'] = json.dumps({
     'cluster': {
-        'worker': ["localhost:20000", "localhost:20001"]
+        'worker': ["172.16.1.51:22", "172.16.1.4:22"]
     },
     'task': {'type': 'worker', 'index': 0}
 })
