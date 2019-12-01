@@ -7,14 +7,14 @@
 @file: classification.py
 @time: 2019-11-29 16:49:32
 """
-import time
+import json
+import os
+
 import tensorflow as tf
 from transformers import *
 
 from band.dataset import ChnSentiCorp
 from band.progress import classification_convert_examples_to_features
-
-import os, json
 
 USE_XLA = False
 USE_AMP = False
@@ -33,14 +33,16 @@ dataset = ChnSentiCorp(save_path="/tmp/band")
 data, label = dataset.data, dataset.label
 dataset.dataset_information()
 
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+
 num_workers = 2
 os.environ['TF_CONFIG'] = json.dumps({
     'cluster': {
-        'worker': ["172.16.1.51:22", "172.16.1.4:22"]
+        'worker': ["172.16.1.51:20000", "172.16.1.4:20001"]
     },
     'task': {'type': 'worker', 'index': 0}
 })
-strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+
 BATCH_SIZE = BATCH_SIZE * num_workers
 
 train_number, eval_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
