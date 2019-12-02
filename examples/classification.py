@@ -24,7 +24,6 @@ TEST_BATCH_SIZE = 1
 MAX_SEQ_LEN = 128
 LEARNING_RATE = 3e-5
 
-
 tf.config.optimizer.set_jit(USE_XLA)
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": USE_AMP})
 
@@ -50,7 +49,7 @@ valid_dataset = valid_dataset.batch(EVAL_BATCH_SIZE)
 valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
 config = BertConfig.from_pretrained("bert-base-chinese", num_labels=dataset.num_labels)
-model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config)
+model = TFBertForSequenceClassification.from_pretrained('bert-base-chinese', config=config, from_pt=True)
 optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08)
 if USE_AMP:
     optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')

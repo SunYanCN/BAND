@@ -46,9 +46,9 @@ A simple and efficient BERT model training and deployment framework，一个简�
 <p align="right"><a href="#embedding-as-service"><sup>▴ Back to top</sup></a></p>
   
   
-Install the embedding-as-servive via `pip`.   
+Install the band via `pip`.   
 ```bash  
-$ pip install embedding-as-service
+$ pip install band -U
 ```  
 > Note that the code MUST be running on **Python >= 3.6**. Again module does not support Python 2!  
   

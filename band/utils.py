@@ -296,6 +296,16 @@ def view_pb_file(pb_file_path: str):
     print(infer.structured_outputs)
 
 
+def show_gpus_and_set_memory_growth():
+    import tensorflow as tf
+    from pprint import pprint
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    pprint(gpus)
+    if gpus:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+
+
 if __name__ == '__main__':
     zh_text = ["我爱中国。"]
     en_text = ["ILove China."]
