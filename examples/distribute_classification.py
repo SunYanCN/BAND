@@ -12,7 +12,7 @@ import json
 import os
 
 import tensorflow as tf
-from transformers import BertConfig,BertTokenizer
+from transformers import BertConfig, BertTokenizer
 
 from band.dataset import ChnSentiCorp
 from band.model import TFBertForSequenceClassification
@@ -80,25 +80,3 @@ history = model.fit(train_dataset, epochs=EPOCHS,
                     validation_data=valid_dataset,
                     validation_steps=eval_number // EVAL_BATCH_SIZE)
 
-# test_dataset = classification_convert_examples_to_features(data['test'], tokenizer, max_length=MAX_SEQ_LEN,
-#                                                            label_list=label,
-#                                                            output_mode="classification")
-
-# test_dataset = train_dataset.batch(TEST_BATCH_SIZE).repeat(1)
-# test_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-#
-# loss, accuracy = model.evaluate(data['train'], )
-
-# saved_model_path = "./saved_models/{}".format(int(time.time()))
-# model.save(saved_model_path, save_format="tf")
-
-"""
-channels:
-  - https://mirrors.ustc.edu.cn/anaconda/pkgs/main/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
-  - defaults
-show_channel_urls: true
-"""

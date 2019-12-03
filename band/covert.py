@@ -40,6 +40,21 @@ def convert_tf_checkpoint_to_pytorch(tf_checkpoint_path, bert_config_file, pytor
     torch.save(model.state_dict(), pytorch_dump_path)
 
 
+def albert_convert_tf_checkpoint_to_pytorch(tf_checkpoint_path, albert_config_file, pytorch_dump_path):
+    from transformers import AlbertConfig, AlbertForMaskedLM, load_tf_weights_in_albert
+    # Initialise PyTorch model
+    config = AlbertConfig.from_json_file(albert_config_file)
+    print("Building PyTorch model from configuration: {}".format(str(config)))
+    model = AlbertForMaskedLM(config)
+
+    # Load weights from tf checkpoint
+    load_tf_weights_in_albert(model, config, tf_checkpoint_path)
+
+    # Save pytorch-model
+    print("Save PyTorch model to {}".format(pytorch_dump_path))
+    torch.save(model.state_dict(), pytorch_dump_path)
+
+
 def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name: str):
     """
     :param model:BertModel Pytorch model instance to be converted
@@ -108,8 +123,13 @@ def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name
 
 
 if __name__ == '__main__':
-    convert_tf_checkpoint_to_pytorch(
-        tf_checkpoint_path="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/bert_model.ckpt",
-        bert_config_file="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/bert_config.json",
-        pytorch_dump_path="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/pytorch_model.bin"
+    # convert_tf_checkpoint_to_pytorch(
+    #     tf_checkpoint_path="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/bert_model.ckpt",
+    #     bert_config_file="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/bert_config.json",
+    #     pytorch_dump_path="C:/Users/lenovo/Downloads/chinese_L-12_H-768_A-12/pytorch_model.bin"
+    # )
+    albert_convert_tf_checkpoint_to_pytorch(
+        tf_checkpoint_path="C:/Users/lenovo/Desktop/albert_tiny_zh_google/albert_model.ckpt",
+        albert_config_file="C:/Users/lenovo/Desktop/albert_tiny_zh_google/albert_config_tiny_g.json",
+        pytorch_dump_path="C:/Users/lenovo/Desktop/albert_tiny_zh_google/pytorch_model.bin"
     )

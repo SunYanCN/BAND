@@ -138,6 +138,41 @@ def classification_convert_examples_to_features(examples, tokenizer,
     return features
 
 
+class Classification_Dataset(object):
+
+    def __init__(self, dataset, tokenizer, max_length, output_mode="classification", train_batch_size=16,
+                 epochs=3, valid_batch_size=16, test_batch_size=1):
+        data, label = dataset.data, dataset.label
+
+        dataset.dataset_information()
+
+        train_number, valid_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
+
+        train_dataset = classification_convert_examples_to_features(data['train'], tokenizer, max_length=max_length,
+                                                                    label_list=label,
+                                                                    output_mode=output_mode)
+        valid_dataset = classification_convert_examples_to_features(data['validation'], tokenizer,
+                                                                    max_length=max_length,
+                                                                    label_list=label,
+                                                                    output_mode=output_mode)
+
+        train_dataset = train_dataset.shuffle(100).batch(train_batch_size, drop_remainder=True).repeat(epochs)
+        self.train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        valid_dataset = valid_dataset.batch(valid_batch_size)
+        self.valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        test_dataset = classification_convert_examples_to_features(data['test'], tokenizer, max_length=max_length,
+                                                                   label_list=label,
+                                                                   output_mode=output_mode)
+        test_dataset = test_dataset.batch(test_batch_size).repeat(1)
+        self.test_dataset = test_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        self.train_steps = train_number // train_batch_size
+        self.valid_steps = valid_number // valid_batch_size
+        self.test_steps = test_number // test_batch_size
+
+
 def ner_convert_examples_to_features(examples,
                                      tokenizer,
                                      label_list,
@@ -287,6 +322,40 @@ def ner_convert_examples_to_features(examples,
                                                tf.TensorShape([None])))
 
     return features
+
+
+class NER_Dataset(object):
+
+    def __init__(self, dataset, tokenizer, max_length, pad_token_label_id=0, train_batch_size=16,
+                 epochs=3, valid_batch_size=16, test_batch_size=1):
+        data, label = dataset.data, dataset.label
+
+        dataset.dataset_information()
+
+        train_number, valid_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
+
+        train_dataset = ner_convert_examples_to_features(data['train'], tokenizer,
+                                                         max_length=max_length,
+                                                         label_list=label, pad_token_label_id=pad_token_label_id)
+        valid_dataset = ner_convert_examples_to_features(data['validation'], tokenizer,
+                                                         max_length=max_length,
+                                                         label_list=label, pad_token_label_id=pad_token_label_id)
+
+        train_dataset = train_dataset.shuffle(100).batch(train_batch_size, drop_remainder=True).repeat(epochs)
+        self.train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        valid_dataset = valid_dataset.batch(valid_batch_size)
+        self.valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        test_dataset = classification_convert_examples_to_features(data['test'], tokenizer, max_length=max_length,
+                                                                   label_list=label,
+                                                                   output_mode=output_mode)
+        test_dataset = test_dataset.batch(test_batch_size).repeat(1)
+        self.test_dataset = test_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        self.train_steps = train_number // train_batch_size
+        self.valid_steps = valid_number // valid_batch_size
+        self.test_steps = test_number // test_batch_size
 
 
 def squad_convert_examples_to_features(examples, tokenizer, max_seq_length,
@@ -525,20 +594,23 @@ def squad_convert_examples_to_features(examples, tokenizer, max_seq_length,
                             'input_ids': ex.input_ids,
                             'attention_mask': ex.input_mask,
                             'token_type_ids': ex.segment_ids},
-                           ex.start_position, ex.end_position)
+                           {"start_position": ex.start_position,
+                            "end_position": ex.end_position})
 
             return tf.data.Dataset.from_generator(gen,
                                                   ({'unique_id': tf.int32,
                                                     'input_ids': tf.int32,
                                                     'attention_mask': tf.int32,
                                                     'token_type_ids': tf.int32},
-                                                   tf.int64),
+                                                   {"start_position": tf.int64,
+                                                    "end_position": tf.int64}
+                                                   ),
                                                   ({'unique_id': tf.TensorShape([None]),
                                                     'input_ids': tf.TensorShape([None]),
                                                     'attention_mask': tf.TensorShape([None]),
                                                     'token_type_ids': tf.TensorShape([None])},
-                                                   tf.TensorShape([None])))
-
+                                                   {"start_position": tf.TensorShape([None]),
+                                                    "end_position": tf.TensorShape([None])}))
     return features
 
 
@@ -1257,8 +1329,3 @@ def find_all_best_thresh_v2(main_eval, preds, exact_raw, f1_raw, na_probs, qid_t
     main_eval['best_f1_thresh'] = f1_thresh
     main_eval['has_ans_exact'] = has_ans_exact
     main_eval['has_ans_f1'] = has_ans_f1
-
-
-if __name__ == '__main__':
-    label = 'O\x02O\x02O\x02O\x02O\x02O\x02O\x02B-LOC\x02I-LOC\x02O\x02B-LOC\x02I-LOC\x02O\x02O\x02O\x02O\x02O\x02O'
-    label = label.split('\x02')

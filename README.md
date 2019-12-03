@@ -1,6 +1,6 @@
 # BAND：BERT Application aNd Deployment
 
-A simple and efficient BERT model training and deployment framework，一个简单高效的 BERT 模型训练和部署框架
+A simple and efficient BERT model training and deployment framework.
 
 <!-- PROJECT SHIELDS -->
 
@@ -39,7 +39,6 @@ A simple and efficient BERT model training and deployment framework，一个简�
 <h2 align="center">What is it</h3>  
   
 **Encoding/Embedding** is a upstream task of encoding any inputs in the form of text, image, audio, video, transactional data to fixed length vector. Embeddings are quite popular in the field of NLP, there has been various Embeddings models being proposed in recent years by researchers, some of the famous one are bert, xlnet, word2vec etc. The goal of this repo is to build one stop solution for all embeddings techniques available, here we are starting with popular text embeddings for now and later on we aim  to add as much technique for image, audio, video inputs also.  
-  
 **Finally**, **`embedding-as-service`** help you to encode any given text to fixed length vector from supported embeddings and models.  
   
 <h2 align="center">💾 Installation</h2>  
@@ -56,6 +55,7 @@ $ pip install band -U
 <p align="right"><a href="#embedding-as-service"><sup>▴ Back to top</sup></a></p>
 
 ## Dataset 
+For more information about dataset, see
 | Dataset Name | Language |             TASK              |        Description         |
 | :----------: | :------: | :---------------------------: | :------------------------: |
 | ChnSentiCorp |    CN    |      Text Classification      |   Binary Classification    |
@@ -68,6 +68,8 @@ $ pip install band -U
 |     CMRC     |    CN    | Machine Reading Comprehension |            Span            |
 |     GLUE     |    EN    |                               |                            |
 
+## Current Pretrained Models
+For more information about pretrained models, see
 <!-- links -->
 [your-project-path]: SunYanCN/BAND
 [contributors-shield]: https://img.shields.io/github/contributors/SunYanCN/BAND.svg?style=flat-square

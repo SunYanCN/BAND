@@ -14,10 +14,16 @@
 # model = load_model(os.path.join('models', 'bert-base-chinese-tf_model.h5'))
 # print(model.summary())
 # import tensorflow as tf
+
 import os
 from transformers import *
 import tensorflow as tf
+from band.model import TFBertForSequenceClassification
 
-pretrained_dir = "/home/band/models"
-config = BertConfig.from_pretrained(pretrained_dir)
-tokenizer = BertTokenizer.from_pretrained(pretrained_dir)
+# pretrained_dir = "C:/Users/lenovo/Desktop/chinese_wwm_pytorch"
+# pretrained_dir = "C:/Users/lenovo/Desktop/RoBERTa_zh_L12_PyTorch"
+# config = BertConfig.from_pretrained(pretrained_dir)
+# tokenizer = BertTokenizer.from_pretrained(pretrained_dir)
+#
+# model = TFBertForSequenceClassification.from_pretrained(pretrained_dir, config, from_pt=True)
+# print(model.summary())

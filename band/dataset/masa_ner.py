@@ -1,12 +1,18 @@
-"""
-@author: SunYanCN
-@contact: sunyanhust@163.com
-@blog: https://sunyancn.github.io
-@version: 1.0
-@license: MIT Licence
-@file: masa_ner.py
-@time: 2019-11-24 21:22:47
-"""
+#coding:utf-8
+#   Copyright (c) 2019  PaddlePaddle Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from transformers import InputExample
 from band.config import DATASET_URL
 from band.base import TSV_Processor, Dataset_Base, download_dataset
@@ -19,7 +25,7 @@ class MSRA_NER_Processor(TSV_Processor):
         pass
 
     def get_labels(self):
-        return ["B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "O"]
+        return ["<PAD>", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "O"]
 
     def _create_examples(self, lines, set_type):
         examples = []

@@ -9,6 +9,7 @@
 """
 
 import os
+import json
 import prettytable as pt
 import tensorflow as tf
 from tabulator import Stream
@@ -181,3 +182,34 @@ class CSV_Processor(DataProcessor):
         with Stream(input_file) as stream:
             for row in stream:
                 yield row
+
+
+class JSON_Processor(DataProcessor):
+
+    def get_example_from_tensor_dict(self, tensor_dict):
+        raise NotImplementedError
+
+    def get_train_examples(self, data_dir):
+        return self._create_examples(
+            self._read_json(os.path.join(data_dir, "train.json")), "train")
+
+    def get_dev_examples(self, data_dir):
+        return self._create_examples(
+            self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+
+    def get_test_examples(self, data_dir):
+        return self._create_examples(
+            self._read_json(os.path.join(data_dir, "test.json")), "test")
+
+    def get_labels(self):
+        raise NotImplementedError
+
+    def _create_examples(self, lines, set_type):
+        raise NotImplementedError
+
+    @classmethod
+    def _read_json(cls, input_file):
+        with open(input_file, "r") as reader:
+            input_data = json.load(reader)["data"]
+            for d in input_data:
+                yield d
