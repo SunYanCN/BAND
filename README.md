@@ -82,3 +82,7 @@ For more information about pretrained models, see
 [issues-url]: https://github.com/SunYanCN/BAND/issues
 [license-shield]: https://img.shields.io/github/license/SunYanCN/BAND.svg?style=flat-square
 [license-url]: https://github.com/SunYanCN/BAND/blob/master/LICENSE
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/SunYanCN/BAND.svg)](https://starchart.cc/SunYanCN/BAND)
