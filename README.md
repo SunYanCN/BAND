@@ -17,8 +17,6 @@ A simple and efficient BERT model training and deployment framework.
   <a href="https://github.com/SunYanCN/BAND">
     <img src="figures/logo.png" alt="Logo" width="100" height="100">
   </a>
-
-  <h3 align="center">BAND</h3>
   <p align="center">
     BAND：BERT Application aNd Deployment
     <br />
