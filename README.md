@@ -269,7 +269,8 @@ For more information about dataset, see
 |     CMRC     |    CN    | Machine Reading Comprehension |            Span            |
 |     GLUE     |    EN    |                               |                            |
 
-## Current Pretrained Models
+<h2 align="center" href="#supported-models">✅ Supported Embeddings and Models</h2> 
+
 For more information about pretrained models, see
 <!-- links -->
 [your-project-path]: SunYanCN/BAND
