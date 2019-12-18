@@ -22,16 +22,16 @@ A simple and efficient BERT model training and deployment framework.
   <p align="center">
     BAND：BERT Application aNd Deployment
     <br />
-    <a href="https://sunyancn.github.io/BAND/"><strong>探索本项目的文档 »</strong></a>
+    <a href="https://sunyancn.github.io/BAND/"><strong> Documents »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/SunYanCN/BAND/tree/master/examples">查看Demo</a>
+    <a href="https://github.com/SunYanCN/BAND/tree/master/examples">Examples</a>
     ·
-    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=bug_report.md&title=">报告Bug</a>
+    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=bug_report.md&title=">Report Bug</a>
     ·
-    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=feature_request.md&title=">提出新特性</a>
+    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=feature_request.md&title=">Feature Request</a>
         ·
-    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=custom.md&title=">问题交流</a>
+    <a href="https://github.com/SunYanCN/BAND/issues/new?assignees=&labels=&template=custom.md&title=">Questions</a>
   </p>
 
 </p>
