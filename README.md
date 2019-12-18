@@ -50,7 +50,9 @@ $ pip install band -U
 > Note that the code MUST be running on **Python >= 3.6**. Again module does not support Python 2!  
   
 <h2 align="center">⚡ ️Getting Started</h2> 
+
 ### Text Classification Example
+
 ```python
 import time
 import tensorflow as tf
@@ -120,6 +122,7 @@ if SAVE_MODEL:
     model.save(saved_model_path, save_format="tf")
 ```
 ### Named Entity Recognition
+
 ```python
 import time
 import tensorflow as tf
