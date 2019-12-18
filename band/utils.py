@@ -45,16 +45,16 @@ class SquadExample(object):
 
     def __repr__(self):
         s = ""
-        s += "qas_id: %s" % (self.qas_id)
+        s += "qas_id: %s" % self.qas_id
         s += ", question_text: %s" % (
             self.question_text)
         s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
         if self.start_position:
-            s += ", start_position: %d" % (self.start_position)
+            s += ", start_position: %d" % self.start_position
         if self.end_position:
-            s += ", end_position: %d" % (self.end_position)
+            s += ", end_position: %d" % self.end_position
         if self.is_impossible:
-            s += ", is_impossible: %r" % (self.is_impossible)
+            s += ", is_impossible: %r" % self.is_impossible
         return s
 
 
@@ -92,6 +92,78 @@ class SquadInputFeatures(object):
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
+
+
+class ClassificationFeatureWriter(object):
+    """Writes InputFeature to TF example file."""
+
+    def __init__(self, filename, is_training):
+        self.filename = filename
+        self.is_training = is_training
+        self.num_features = 0
+        self._writer = tf.io.TFRecordWriter(filename)
+
+    def process_feature(self, feature):
+        """Write a InputFeature to the TFRecordWriter as a tf.train.Example."""
+        self.num_features += 1
+
+        def create_int_feature(values):
+            feature = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list(values)))
+            return feature
+
+        features = collections.OrderedDict()
+        features["input_ids"] = create_int_feature(feature.input_ids)
+        features["input_mask"] = create_int_feature(feature.input_mask)
+        features["segment_ids"] = create_int_feature(feature.segment_ids)
+
+        if self.is_training:
+            features["label_ids"] = create_int_feature([feature.label_id])
+
+        tf_example = tf.train.Example(features=tf.train.Features(feature=features))
+        self._writer.write(tf_example.SerializeToString())
+
+    def close(self):
+        self._writer.close()
+
+
+class SquadFeatureWriter(object):
+    """Writes InputFeature to TF example file."""
+
+    def __init__(self, filename, is_training):
+        self.filename = filename
+        self.is_training = is_training
+        self.num_features = 0
+        self._writer = tf.io.TFRecordWriter(filename)
+
+    def process_feature(self, feature):
+        """Write a InputFeature to the TFRecordWriter as a tf.train.Example."""
+        self.num_features += 1
+
+        def create_int_feature(values):
+            feature = tf.train.Feature(
+                int64_list=tf.train.Int64List(value=list(values)))
+            return feature
+
+        features = collections.OrderedDict()
+        features["unique_ids"] = create_int_feature([feature.unique_id])
+        features["input_ids"] = create_int_feature(feature.input_ids)
+        features["input_mask"] = create_int_feature(feature.input_mask)
+        features["segment_ids"] = create_int_feature(feature.segment_ids)
+
+        if self.is_training:
+            features["start_positions"] = create_int_feature([feature.start_position])
+            features["end_positions"] = create_int_feature([feature.end_position])
+            impossible = 0
+            if feature.is_impossible:
+                impossible = 1
+            features["is_impossible"] = create_int_feature([impossible])
+
+        tf_example = tf.train.Example(features=tf.train.Features(feature=features))
+        self._writer.write(tf_example.SerializeToString())
+
+    def close(self):
+        self._writer.close()
 
 
 def read_squad_examples(input_file, is_training, version_2_with_negative):

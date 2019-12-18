@@ -38,10 +38,14 @@ def download_dataset(save_path: str, dataset_name: str, file_name: str, dataset_
     return dataset_dir
 
 
-def load_dataset(dataset_dir: str, processor):
-    data = {'train': processor.get_train_examples(dataset_dir),
-            'validation': processor.get_dev_examples(dataset_dir),
-            'test': processor.get_test_examples(dataset_dir)}
+def load_dataset(dataset_dir: str, processor, test=True):
+    if test:
+        data = {'train': processor.get_train_examples(dataset_dir),
+                'validation': processor.get_dev_examples(dataset_dir),
+                'test': processor.get_test_examples(dataset_dir)}
+    else:
+        data = {'train': processor.get_train_examples(dataset_dir),
+                'validation': processor.get_dev_examples(dataset_dir)}
 
     label = processor.get_labels()
 

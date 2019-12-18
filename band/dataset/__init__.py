@@ -12,3 +12,4 @@ from .masa_ner import MSRA_NER
 from .chnsenticorp import ChnSentiCorp
 from .lcqcm import LCQMC
 from .toxic import Toxic
+from .squad import Squad

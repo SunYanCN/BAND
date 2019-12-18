@@ -10,6 +10,7 @@
 
 import tensorflow as tf
 from transformers import TFBertModel, BertConfig
+from transformers.modeling_tf_utils import get_initializer
 
 
 class BertModel(object):
@@ -25,19 +26,21 @@ class BertModel(object):
         raise NotImplementedError
 
     @classmethod
-    def from_pretrained(cls, pretrained_dir, config, from_pt):
+    def from_pretrained(cls, pretrained_dir, config, from_pt, answer_types_num=None, max_length=None):
         bert = TFBertModel.from_pretrained(pretrained_dir, config=config, from_pt=from_pt)
-        inputs, outputs = cls(config=config).build_model(bert)
+        inputs, outputs = cls(config=config, answer_types_num=answer_types_num, max_length=max_length).build_model(bert)
         return tf.keras.Model(inputs=inputs, outputs=outputs)
 
 
 class TFBertForSequenceClassification(BertModel):
 
-    def __init__(self, config):
+    def __init__(self, config, answer_types_num=None, max_len=None):
         super().__init__()
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
-        self.classifier = tf.keras.layers.Dense(config.num_labels, name='classifier')
+        self.classifier = tf.keras.layers.Dense(config.num_labels,
+                                                kernel_initializer=get_initializer(config.initializer_range),
+                                                name='classifier')
 
     def build_model(self, bert):
         inputs = self.inputs
@@ -49,11 +52,13 @@ class TFBertForSequenceClassification(BertModel):
 
 class TFBertForTokenClassification(BertModel):
 
-    def __init__(self, config):
+    def __init__(self, config, answer_types_num=None, max_length=None):
         super().__init__()
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
-        self.classifier = tf.keras.layers.Dense(config.num_labels, name='classifier')
+        self.classifier = tf.keras.layers.Dense(config.num_labels,
+                                                kernel_initializer=get_initializer(config.initializer_range),
+                                                name='classifier')
 
     def build_model(self, bert):
         inputs = self.inputs
@@ -65,20 +70,59 @@ class TFBertForTokenClassification(BertModel):
 
 class TFBertForQuestionAnswering(BertModel):
 
-    def __init__(self, config):
+    def __init__(self, config, answer_types_num=None, max_length=None):
         super().__init__()
+        self.unique_id = tf.keras.layers.Input(shape=(), dtype='int32', name='unique_id')
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
-        self.qa_outputs = tf.keras.layers.Dense(config.num_labels, name='classifier')
+        self.qa_outputs = tf.keras.layers.Dense(config.num_labels, name='qa_outputs')
+        self.start_pos_classifier = tf.keras.layers.Dense(max_length,
+                                                          kernel_initializer=get_initializer(config.initializer_range),
+                                                          name='start_position')
+        self.end_pos_classifier = tf.keras.layers.Dense(max_length,
+                                                        kernel_initializer=get_initializer(config.initializer_range),
+                                                        name='end_position')
 
     def build_model(self, bert):
         inputs = self.inputs
         sequence_output, pooled_output = bert(inputs)
-        logits = self.qa_outputs(sequence_output)
-        start_logits, end_logits = tf.split(logits, 2, axis=-1)
-        start_logits = tf.squeeze(start_logits, axis=-1)
-        end_logits = tf.squeeze(end_logits, axis=-1)
+        pooled_output = self.dropout(pooled_output)
+        start_logits = self.start_pos_classifier(pooled_output)
+        end_logits = self.end_pos_classifier(pooled_output)
         outputs = (start_logits, end_logits)
+        inputs = [self.unique_id] + self.inputs
+        return inputs, outputs
+
+
+class TFBertForQuestionAnsweringWithAnswerType(BertModel):
+
+    def __init__(self, config, answer_types_num=None, max_length=None):
+        super().__init__()
+        self.unique_id = tf.keras.layers.Input(shape=(), dtype='int32', name='unique_id')
+        self.num_labels = config.num_labels
+        self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
+        self.qa_outputs = tf.keras.layers.Dense(config.num_labels, name='qa_outputs')
+        self.start_pos_classifier = tf.keras.layers.Dense(max_length,
+                                                          kernel_initializer=get_initializer(config.initializer_range),
+                                                          name='start_position')
+        self.end_pos_classifier = tf.keras.layers.Dense(max_length,
+                                                        kernel_initializer=get_initializer(config.initializer_range),
+                                                        name='end_position')
+
+        self.answer_type_classifier = tf.keras.layers.Dense(answer_types_num,
+                                                            kernel_initializer=get_initializer(
+                                                                config.initializer_range),
+                                                            name='answer_type_classifier')
+
+    def build_model(self, bert):
+        inputs = self.inputs
+        sequence_output, pooled_output = bert(inputs)
+        pooled_output = self.dropout(pooled_output)
+        start_logits = self.start_pos_classifier(pooled_output)
+        end_logits = self.end_pos_classifier(pooled_output)
+        answer_type_logits = self.answer_type_classifier(pooled_output)
+        outputs = (start_logits, end_logits, answer_type_logits)
+        inputs = [self.unique_id] + self.inputs
         return inputs, outputs
 
 
