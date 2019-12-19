@@ -140,37 +140,39 @@ def classification_convert_examples_to_features(examples, tokenizer,
 
 class Classification_Dataset(object):
 
-    def __init__(self, dataset, tokenizer, max_length, output_mode="classification", train_batch_size=16,
-                 epochs=3, valid_batch_size=16, test_batch_size=1):
+    def __init__(self, dataset, tokenizer, train_config, output_mode="classification"):
         data, label = dataset.data, dataset.label
 
         dataset.dataset_information()
 
         train_number, valid_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
 
-        train_dataset = classification_convert_examples_to_features(data['train'], tokenizer, max_length=max_length,
+        train_dataset = classification_convert_examples_to_features(data['train'], tokenizer,
+                                                                    max_length=train_config.max_length,
                                                                     label_list=label,
                                                                     output_mode=output_mode)
         valid_dataset = classification_convert_examples_to_features(data['validation'], tokenizer,
-                                                                    max_length=max_length,
+                                                                    max_length=train_config.max_length,
                                                                     label_list=label,
                                                                     output_mode=output_mode)
-
-        train_dataset = train_dataset.shuffle(100).batch(train_batch_size, drop_remainder=True).repeat(epochs)
-        self.train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-
-        valid_dataset = valid_dataset.batch(valid_batch_size)
-        self.valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-
-        test_dataset = classification_convert_examples_to_features(data['test'], tokenizer, max_length=max_length,
+        test_dataset = classification_convert_examples_to_features(data['test'], tokenizer,
+                                                                   max_length=train_config.max_length,
                                                                    label_list=label,
                                                                    output_mode=output_mode)
-        test_dataset = test_dataset.batch(test_batch_size).repeat(1)
+
+        train_dataset = train_dataset.shuffle(100).batch(train_config.train_batch_size, drop_remainder=True).repeat(
+            train_config.epochs)
+        self.train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        valid_dataset = valid_dataset.batch(train_config.eval_batch_size)
+        self.valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
+        test_dataset = test_dataset.batch(train_config.test_batch_size).repeat(1)
         self.test_dataset = test_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-        self.train_steps = train_number // train_batch_size
-        self.valid_steps = valid_number // valid_batch_size
-        self.test_steps = test_number // test_batch_size
+        self.train_steps = train_number // train_config.train_batch_size
+        self.valid_steps = valid_number // train_config.eval_batch_size
+        self.test_steps = test_number // train_config.test_batch_size
 
 
 def ner_convert_examples_to_features(examples,
@@ -212,7 +214,7 @@ def ner_convert_examples_to_features(examples,
     label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
-    for (ex_index, example) in enumerate(examples):
+    for (ex_index, example) in enumerate(tqdm(examples, desc='convert data to feature')):
         if ex_index % 10000 == 0:
             logger.info("Writing example %d of %d", ex_index, len(examples))
 
@@ -325,38 +327,207 @@ def ner_convert_examples_to_features(examples,
     return features
 
 
+def parallel_ner_convert_examples_to_features(examples,
+                                              tokenizer,
+                                              label_list,
+                                              max_length,
+                                              cls_token_at_end=False,
+                                              cls_token="[CLS]",
+                                              cls_token_segment_id=1,
+                                              sep_token="[SEP]",
+                                              sep_token_extra=False,
+                                              pad_on_left=False,
+                                              pad_token=0,
+                                              pad_token_segment_id=0,
+                                              pad_token_label_id=-1,
+                                              sequence_a_segment_id=0,
+                                              mask_padding_with_zero=True,
+                                              return_tf_dataset=True):
+    """
+    :param return_tf_dataset:
+    :param examples:
+    :param tokenizer:
+    :param label_list:
+    :param max_length:
+    :param cls_token_at_end:
+    :param cls_token:
+    :param cls_token_segment_id:
+    :param sep_token:
+    :param sep_token_extra:
+    :param pad_on_left:
+    :param pad_token:
+    :param pad_token_segment_id:
+    :param pad_token_label_id:
+    :param sequence_a_segment_id:
+    :param mask_padding_with_zero:
+    :return:
+    """
+
+    label_map = {label: i for i, label in enumerate(label_list)}
+
+    features = []
+
+    def convert_to_features(example):
+        tokens = []
+        label_ids = []
+        for word, label in zip(example.text_a, example.label):
+            word_tokens = tokenizer.tokenize(word)
+            tokens.extend(word_tokens)
+            # Use the real label id for the first token of the word, and padding ids for the remaining tokens
+            label_ids.extend([label_map[label]] + [pad_token_label_id] * (len(word_tokens) - 1))
+
+        # Account for [CLS] and [SEP] with "- 2" and with "- 3" for RoBERTa.
+        special_tokens_count = 3 if sep_token_extra else 2
+        if len(tokens) > max_length - special_tokens_count:
+            tokens = tokens[:(max_length - special_tokens_count)]
+            label_ids = label_ids[:(max_length - special_tokens_count)]
+
+        # The convention in BERT is:
+        # (a) For sequence pairs:
+        #  tokens:   [CLS] is this jack ##son ##ville ? [SEP] no it is not . [SEP]
+        #  type_ids:   0   0  0    0    0     0       0   0   1  1  1  1   1   1
+        # (b) For single sequences:
+        #  tokens:   [CLS] the dog is hairy . [SEP]
+        #  type_ids:   0   0   0   0  0     0   0
+        #
+        # Where "type_ids" are used to indicate whether this is the first
+        # sequence or the second sequence. The embedding vectors for `type=0` and
+        # `type=1` were learned during pre-training and are added to the wordpiece
+        # embedding vector (and position vector). This is not *strictly* necessary
+        # since the [SEP] token unambiguously separates the sequences, but it makes
+        # it easier for the model to learn the concept of sequences.
+        #
+        # For classification tasks, the first vector (corresponding to [CLS]) is
+        # used as as the "sentence vector". Note that this only makes sense because
+        # the entire model is fine-tuned.
+        tokens += [sep_token]
+        label_ids += [pad_token_label_id]
+        if sep_token_extra:
+            # roberta uses an extra separator b/w pairs of sentences
+            tokens += [sep_token]
+            label_ids += [pad_token_label_id]
+        segment_ids = [sequence_a_segment_id] * len(tokens)
+
+        if cls_token_at_end:
+            tokens += [cls_token]
+            label_ids += [pad_token_label_id]
+            segment_ids += [cls_token_segment_id]
+        else:
+            tokens = [cls_token] + tokens
+            label_ids = [pad_token_label_id] + label_ids
+            segment_ids = [cls_token_segment_id] + segment_ids
+
+        input_ids = tokenizer.convert_tokens_to_ids(tokens)
+
+        # The mask has 1 for real tokens and 0 for padding tokens. Only real
+        # tokens are attended to.
+        input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+
+        # Zero-pad up to the sequence length.
+        padding_length = max_length - len(input_ids)
+        if pad_on_left:
+            input_ids = ([pad_token] * padding_length) + input_ids
+            input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+            segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
+            label_ids = ([pad_token_label_id] * padding_length) + label_ids
+        else:
+            input_ids += ([pad_token] * padding_length)
+            input_mask += ([0 if mask_padding_with_zero else 1] * padding_length)
+            segment_ids += ([pad_token_segment_id] * padding_length)
+            label_ids += ([pad_token_label_id] * padding_length)
+
+        assert len(input_ids) == max_length
+        assert len(input_mask) == max_length
+        assert len(segment_ids) == max_length
+        assert len(label_ids) == max_length
+
+        return InputFeatures(input_ids=input_ids,
+                             attention_mask=input_mask,
+                             token_type_ids=segment_ids,
+                             label=label_ids)
+
+    features = parallel_apply(
+        func=convert_to_features,
+        iterable=tqdm(examples, desc='convert data to feature'),
+        workers=10,
+        max_queue_size=500,
+        callback=None,
+    )
+
+    if is_tf_available() and return_tf_dataset:
+        def gen():
+            for ex in features:
+                yield ({'input_ids': ex.input_ids,
+                        'attention_mask': ex.attention_mask,
+                        'token_type_ids': ex.token_type_ids},
+                       ex.label)
+
+        return tf.data.Dataset.from_generator(gen,
+                                              ({'input_ids': tf.int32,
+                                                'attention_mask': tf.int32,
+                                                'token_type_ids': tf.int32},
+                                               tf.int64),
+                                              ({'input_ids': tf.TensorShape([None]),
+                                                'attention_mask': tf.TensorShape([None]),
+                                                'token_type_ids': tf.TensorShape([None])},
+                                               tf.TensorShape([None])))
+
+    return features
+
+
 class NER_Dataset(object):
 
-    def __init__(self, dataset, tokenizer, max_length, pad_token_label_id=0, train_batch_size=16,
-                 epochs=3, valid_batch_size=16, test_batch_size=1):
+    def __init__(self, dataset, tokenizer, train_config, parallel=True, pad_token_label_id=0):
         data, label = dataset.data, dataset.label
 
         dataset.dataset_information()
 
         train_number, valid_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
 
-        train_dataset = ner_convert_examples_to_features(data['train'], tokenizer,
-                                                         max_length=max_length,
-                                                         label_list=label, pad_token_label_id=pad_token_label_id)
-        valid_dataset = ner_convert_examples_to_features(data['validation'], tokenizer,
-                                                         max_length=max_length,
-                                                         label_list=label, pad_token_label_id=pad_token_label_id)
+        if parallel:
+            train_dataset = parallel_ner_convert_examples_to_features(data['train'], tokenizer,
+                                                                      max_length=train_config.max_length,
+                                                                      label_list=label,
+                                                                      pad_token_label_id=pad_token_label_id)
+            valid_dataset = parallel_ner_convert_examples_to_features(data['validation'], tokenizer,
+                                                                      max_length=train_config.max_length,
+                                                                      label_list=label,
+                                                                      pad_token_label_id=pad_token_label_id)
+            test_dataset = parallel_ner_convert_examples_to_features(data['test'], tokenizer,
+                                                                     max_length=train_config.max_length,
+                                                                     label_list=label,
+                                                                     pad_token_label_id=pad_token_label_id)
+        else:
+            train_dataset = ner_convert_examples_to_features(data['train'], tokenizer,
+                                                             max_length=train_config.max_length,
+                                                             label_list=label,
+                                                             pad_token_label_id=pad_token_label_id)
+            valid_dataset = ner_convert_examples_to_features(data['validation'], tokenizer,
+                                                             max_length=train_config.max_length,
+                                                             label_list=label,
+                                                             pad_token_label_id=pad_token_label_id)
+            test_dataset = ner_convert_examples_to_features(data['test'], tokenizer,
+                                                            max_length=train_config.max_length,
+                                                            label_list=label,
+                                                            pad_token_label_id=pad_token_label_id)
 
-        train_dataset = train_dataset.shuffle(100).batch(train_batch_size, drop_remainder=True).repeat(epochs)
+        train_dataset = train_dataset.shuffle(100).batch(train_config.train_batch_size, drop_remainder=True).repeat(
+            train_config.epochs)
         self.train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-        valid_dataset = valid_dataset.batch(valid_batch_size)
+        valid_dataset = valid_dataset.batch(train_config.eval_batch_size)
         self.valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-        test_dataset = classification_convert_examples_to_features(data['test'], tokenizer, max_length=max_length,
-                                                                   label_list=label,
-                                                                   output_mode=output_mode)
-        test_dataset = test_dataset.batch(test_batch_size).repeat(1)
+        test_dataset = test_dataset.batch(train_config.test_batch_size).repeat(1)
         self.test_dataset = test_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-        self.train_steps = train_number // train_batch_size
-        self.valid_steps = valid_number // valid_batch_size
-        self.test_steps = test_number // test_batch_size
+        self.train_steps = train_number // train_config.train_batch_size
+        self.valid_steps = valid_number // train_config.eval_batch_size
+        self.test_steps = test_number // train_config.test_batch_size
+
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=train_config.learning_rate, epsilon=1e-08)
+        self.loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        self.metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
 
 
 def squad_convert_examples_to_features(examples, tokenizer, max_length,
@@ -376,7 +547,7 @@ def squad_convert_examples_to_features(examples, tokenizer, max_length,
     # f = np.zeros((max_N, max_M), dtype=np.float32)
 
     features = []
-    for (example_index, example) in enumerate(tqdm(examples)):
+    for (example_index, example) in enumerate(tqdm(examples, desc='convert data to feature')):
 
         # if example_index % 100 == 0:
         #     logger.info('Converting %s/%s pos %s neg %s', example_index, len(examples), cnt_pos, cnt_neg)
@@ -609,8 +780,8 @@ def squad_convert_examples_to_features(examples, tokenizer, max_length,
                                                 'input_ids': tf.TensorShape([None]),
                                                 'attention_mask': tf.TensorShape([None]),
                                                 'token_type_ids': tf.TensorShape([None])},
-                                               {"start_position": tf.TensorShape([]),
-                                                "end_position": tf.TensorShape([])}))
+                                               {"start_position": tf.TensorShape([None]),
+                                                "end_position": tf.TensorShape([None])}))
     return features
 
 
@@ -820,7 +991,7 @@ def parallel_squad_convert_examples_to_features(examples, tokenizer, max_length,
 
     features = parallel_apply(
         func=convert_to_features,
-        iterable=tqdm(examples),
+        iterable=tqdm(examples, desc='convert data to feature'),
         workers=10,
         max_queue_size=500,
         callback=None,

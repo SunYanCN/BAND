@@ -125,62 +125,33 @@ if SAVE_MODEL:
 import time
 import tensorflow as tf
 from transformers import BertTokenizer, BertConfig
-from band.progress import ner_convert_examples_to_features
 from band.dataset import MSRA_NER
 from band.seqeval.callbacks import F1Metrics
 from band.model import TFBertForTokenClassification
+from band.utils import TrainConfig
+from band.progress import NER_Dataset
 
-EPOCHS = 3
-BATCH_SIZE = 32
-EVAL_BATCH_SIZE = 32
-TEST_BATCH_SIZE = 1
-MAX_SEQ_LEN = 128
-LEARNING_RATE = 3e-5
-SAVE_MODEL = False
-pretrained_dir = "/home/band/models"
+pretrained_dir = '/home/band/models'
+
+train_config = TrainConfig(epochs=3, train_batch_size=32, eval_batch_size=32, test_batch_size=1, max_length=128,
+                           learning_rate=3e-5, save_model=False)
 
 dataset = MSRA_NER(save_path="/tmp/band")
-data, label = dataset.data, dataset.label
-dataset.dataset_information()
 
-train_number, eval_number, test_number = dataset.train_examples_num, dataset.eval_examples_num, dataset.test_examples_num
-
-config = BertConfig.from_pretrained(pretrained_dir, num_labels=dataset.num_labels)
+config = BertConfig.from_pretrained(pretrained_dir, num_labels=dataset.num_labels, return_unused_kwargs=True)
 tokenizer = BertTokenizer.from_pretrained(pretrained_dir)
 model = TFBertForTokenClassification.from_pretrained(pretrained_dir, config=config, from_pt=True)
 
-train_dataset = ner_convert_examples_to_features(data['train'], tokenizer, max_length=MAX_SEQ_LEN,
-                                                 label_list=label,
-                                                 pad_token_label_id=0)
-valid_dataset = ner_convert_examples_to_features(data['validation'], tokenizer, max_length=MAX_SEQ_LEN,
-                                                 label_list=label,
-                                                 pad_token_label_id=0)
-test_dataset = ner_convert_examples_to_features(data['test'], tokenizer, max_length=MAX_SEQ_LEN,
-                                                label_list=label,
-                                                pad_token_label_id=0)
+ner = NER_Dataset(dataset=dataset, tokenizer=tokenizer, train_config=train_config)
+model.compile(optimizer=ner.optimizer, loss=ner.loss, metrics=[ner.metric])
 
-train_dataset = train_dataset.shuffle(100).batch(BATCH_SIZE, drop_remainder=True).repeat(EPOCHS)
-train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-valid_dataset = valid_dataset.batch(EVAL_BATCH_SIZE)
-valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
-test_dataset = test_dataset.batch(TEST_BATCH_SIZE)
-test_dataset = test_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+f1 = F1Metrics(dataset.get_labels(), validation_data=ner.valid_dataset, steps=ner.valid_steps)
 
-optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08)
-loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
-model.compile(optimizer=optimizer, loss=loss, metrics=[metric])
+history = model.fit(ner.train_dataset, epochs=train_config.epochs, steps_per_epoch=ner.test_steps, callbacks=[f1])
 
-print(model.summary())
+loss, accuracy = model.evaluate(ner.test_dataset, steps=ner.test_steps)
 
-f1 = F1Metrics(dataset.get_labels(), validation_data=valid_dataset,
-               steps=eval_number // EVAL_BATCH_SIZE)
-history = model.fit(train_dataset, epochs=EPOCHS,
-                    steps_per_epoch=train_number // BATCH_SIZE,
-                    callbacks=[f1])
-
-loss, accuracy = model.evaluate(test_dataset, steps=test_number//TEST_BATCH_SIZE)
-if SAVE_MODEL:
+if train_config.save_model:
     saved_model_path = "./saved_models/{}".format(int(time.time()))
     model.save(saved_model_path, save_format="tf")
 ```

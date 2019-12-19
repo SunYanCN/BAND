@@ -18,6 +18,19 @@ from transformers.tokenization_bert import whitespace_tokenize
 logger = logging.getLogger(__name__)
 
 
+class TrainConfig(object):
+
+    def __init__(self, epochs: int, train_batch_size: int, eval_batch_size: int, test_batch_size: int, max_length: int, learning_rate: float, save_model: bool):
+
+        self.save_model = save_model
+        self.learning_rate = learning_rate
+        self.max_length = max_length
+        self.test_batch_size = test_batch_size
+        self.eval_batch_size = eval_batch_size
+        self.train_batch_size = train_batch_size
+        self.epochs = epochs
+
+
 class SquadExample(object):
     """
     A single training/test example for the Squad dataset.

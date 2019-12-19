@@ -26,9 +26,6 @@ LEARNING_RATE = 3e-5
 SAVE_MODEL = False
 pretrained_dir = "/home/band/models"
 
-tf.config.optimizer.set_jit(USE_XLA)
-tf.config.optimizer.set_experimental_options({"auto_mixed_precision": USE_AMP})
-
 dataset = Squad(save_path="/tmp/band")
 data, label = dataset.data, dataset.label
 
@@ -45,14 +42,12 @@ train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 valid_dataset = valid_dataset.batch(EVAL_BATCH_SIZE)
 valid_dataset = valid_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-config = BertConfig.from_pretrained(pretrained_dir)
-model = TFBertForQuestionAnswering.from_pretrained(pretrained_dir, config=config, from_pt=True, max_length=MAX_SEQ_LEN)
+config = BertConfig.from_pretrained(pretrained_dir, max_length=MAX_SEQ_LEN, return_unused_kwargs=True)
+model = TFBertForQuestionAnswering.from_pretrained(pretrained_dir, config=config, from_pt=True)
 
 print(model.summary())
 
 optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE, epsilon=1e-08)
-if USE_AMP:
-    optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, 'dynamic')
 
 loss = {'start_position': tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         'end_position': tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)}

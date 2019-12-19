@@ -26,15 +26,16 @@ class BertModel(object):
         raise NotImplementedError
 
     @classmethod
-    def from_pretrained(cls, pretrained_dir, config, from_pt, answer_types_num=None, max_length=None):
+    def from_pretrained(cls, pretrained_dir, config, from_pt):
+        config, other_config = config
         bert = TFBertModel.from_pretrained(pretrained_dir, config=config, from_pt=from_pt)
-        inputs, outputs = cls(config=config, answer_types_num=answer_types_num, max_length=max_length).build_model(bert)
+        inputs, outputs = cls(config=config, other_config=other_config).build_model(bert)
         return tf.keras.Model(inputs=inputs, outputs=outputs)
 
 
 class TFBertForSequenceClassification(BertModel):
 
-    def __init__(self, config, answer_types_num=None, max_len=None):
+    def __init__(self, config, other_config):
         super().__init__()
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
@@ -52,7 +53,7 @@ class TFBertForSequenceClassification(BertModel):
 
 class TFBertForTokenClassification(BertModel):
 
-    def __init__(self, config, answer_types_num=None, max_length=None):
+    def __init__(self, config, other_config):
         super().__init__()
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
@@ -70,16 +71,16 @@ class TFBertForTokenClassification(BertModel):
 
 class TFBertForQuestionAnswering(BertModel):
 
-    def __init__(self, config, answer_types_num=None, max_length=None):
+    def __init__(self, config, other_config):
         super().__init__()
         self.unique_id = tf.keras.layers.Input(shape=(), dtype='int32', name='unique_id')
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.qa_outputs = tf.keras.layers.Dense(config.num_labels, name='qa_outputs')
-        self.start_pos_classifier = tf.keras.layers.Dense(max_length,
+        self.start_pos_classifier = tf.keras.layers.Dense(other_config['max_length'],
                                                           kernel_initializer=get_initializer(config.initializer_range),
                                                           name='start_position')
-        self.end_pos_classifier = tf.keras.layers.Dense(max_length,
+        self.end_pos_classifier = tf.keras.layers.Dense(other_config['max_length'],
                                                         kernel_initializer=get_initializer(config.initializer_range),
                                                         name='end_position')
 
@@ -96,20 +97,20 @@ class TFBertForQuestionAnswering(BertModel):
 
 class TFBertForQuestionAnsweringWithAnswerType(BertModel):
 
-    def __init__(self, config, answer_types_num=None, max_length=None):
+    def __init__(self, config):
         super().__init__()
         self.unique_id = tf.keras.layers.Input(shape=(), dtype='int32', name='unique_id')
         self.num_labels = config.num_labels
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.qa_outputs = tf.keras.layers.Dense(config.num_labels, name='qa_outputs')
-        self.start_pos_classifier = tf.keras.layers.Dense(max_length,
+        self.start_pos_classifier = tf.keras.layers.Dense(config.max_length,
                                                           kernel_initializer=get_initializer(config.initializer_range),
                                                           name='start_position')
-        self.end_pos_classifier = tf.keras.layers.Dense(max_length,
+        self.end_pos_classifier = tf.keras.layers.Dense(config.max_length,
                                                         kernel_initializer=get_initializer(config.initializer_range),
                                                         name='end_position')
 
-        self.answer_type_classifier = tf.keras.layers.Dense(answer_types_num,
+        self.answer_type_classifier = tf.keras.layers.Dense(config.answer_types_num,
                                                             kernel_initializer=get_initializer(
                                                                 config.initializer_range),
                                                             name='answer_type_classifier')
