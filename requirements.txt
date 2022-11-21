@@ -1,5 +1,5 @@
 six
-tensorflow==2.0.1
+tensorflow==2.9.3
 numpy==1.16.4
 pandas==0.23.4
 scikit-learn>=0.21.1
